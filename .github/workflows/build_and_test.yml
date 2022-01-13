@@ -145,7 +145,7 @@ jobs:
     # Run regular jobs for commit in both Apache Spark and forked repository
     if: >-
       (github.repository == 'apache/spark' && needs.configure-jobs.outputs.type == 'scheduled')
-      || (github.repository == 'spark-arm/spark' && needs.configure-jobs.outputs.type == 'spark-arm64-scheduled')
+      || (github.repository == 'Yikun/spark' && needs.configure-jobs.outputs.type == 'spark-arm64-scheduled')
       || (needs.configure-jobs.outputs.type == 'regular' && fromJson(needs.precondition.outputs.required).build == 'true')
     # Ubuntu 20.04 is the latest LTS. The next LTS is 22.04.
     runs-on:  >-
