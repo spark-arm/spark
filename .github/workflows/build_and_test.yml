@@ -24,6 +24,8 @@ on:
     branches:
     - '**'
   schedule:
+    # ARM64 Spark Test
+    - cron: '6 16 * * *'
     # Note that the scheduled jobs are only for master branch.
     # master, Hadoop 2
     - cron: '0 1 * * *'
@@ -64,6 +66,12 @@ jobs:
           echo '::set-output name=type::scheduled'
           echo '::set-output name=envs::{}'
           echo '::set-output name=hadoop::hadoop2'
+        elif [ "${{ github.event.schedule }}" = "6 16 * * *" ]; then
+          echo '::set-output name=java::8'
+          echo '::set-output name=branch::master'
+          echo '::set-output name=type::spark-arm64-scheduled'
+          echo '::set-output name=envs::{}'
+          echo '::set-output name=hadoop::hadoop3'
         elif [ "${{ github.event.schedule }}" = "0 4 * * *" ]; then
           echo '::set-output name=java::8'
           echo '::set-output name=branch::master'
@@ -144,9 +152,12 @@ jobs:
     # Run regular jobs for commit in both Apache Spark and forked repository
     if: >-
       (github.repository == 'apache/spark' && needs.configure-jobs.outputs.type == 'scheduled')
+      || (github.repository == 'spark-arm/spark' && needs.configure-jobs.outputs.type == 'spark-arm64-scheduled')
       || (needs.configure-jobs.outputs.type == 'regular' && fromJson(needs.precondition.outputs.required).build == 'true')
     # Ubuntu 20.04 is the latest LTS. The next LTS is 22.04.
-    runs-on: ubuntu-20.04
+    runs-on:  >-
+      ${{ (needs.configure-jobs.outputs.type == 'spark-arm64-scheduled' && 'ubuntu-20.04-arm64')
+      || 'ubuntu-20.04' }}
     strategy:
       fail-fast: false
       matrix:
@@ -244,6 +255,8 @@ jobs:
         restore-keys: |
           ${{ matrix.java }}-${{ matrix.hadoop }}-coursier-
     - name: Install Java ${{ matrix.java }}
+      # actions/setup-java doesn'ts suppport arm64, it had been installed in self-hosted runner.
+      if: needs.configure-jobs.outputs.type != 'spark-arm64-scheduled'
       uses: actions/setup-java@v1
       with:
         java-version: ${{ matrix.java }}
@@ -252,7 +265,7 @@ jobs:
       # We should install one Python that is higher then 3+ for SQL and Yarn because:
       # - SQL component also has Python related tests, for example, IntegratedUDFTestUtils.
       # - Yarn has a Python specific test too, for example, YarnClusterSuite.
-      if: contains(matrix.modules, 'yarn') || (contains(matrix.modules, 'sql') && !contains(matrix.modules, 'sql-'))
+      if: needs.configure-jobs.outputs.type != 'spark-arm64-scheduled' && (contains(matrix.modules, 'yarn') || (contains(matrix.modules, 'sql') && !contains(matrix.modules, 'sql-')))
       with:
         python-version: 3.8
         architecture: x64
