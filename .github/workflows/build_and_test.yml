@@ -292,7 +292,7 @@ jobs:
     if: >-
       (github.repository == 'apache/spark' && needs.configure-jobs.outputs.type == 'pyspark-coverage-scheduled')
       || (github.repository == 'apache/spark' && needs.configure-jobs.outputs.type == 'scheduled' && needs.configure-jobs.outputs.java == '17')
-      || (github.repository == 'apache/spark' && needs.configure-jobs.outputs.type == 'pyspark-arm64-scheduled')
+      || (github.repository == 'spark-arm/spark' && needs.configure-jobs.outputs.type == 'pyspark-arm64-scheduled')
       || (needs.configure-jobs.outputs.type == 'regular' && fromJson(needs.precondition.outputs.required).pyspark == 'true')
     name: "Build modules (${{ format('{0}, {1} job', needs.configure-jobs.outputs.branch, needs.configure-jobs.outputs.type) }}): ${{ matrix.modules }}"
     runs-on:  >-
